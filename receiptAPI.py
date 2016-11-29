@@ -149,12 +149,12 @@ def get_receipt():
         return jsonify({'message':'no _id provided => all receipts returned', 'data':output})
 
     data = request.get_json()
+    ID = data['_id']
 
-    if data['_id'] not in receipts_db.keys():
-        abort(404, 'no receipt exists for this _id')
+    if ID not in receipts_db.keys():
+        abort(404, str(ID) + " is not a valid Receipt ID")
 
-    receipt = receipts_db[data['_id']]
-    return jsonify({receipt._id: receipt.get_receipt()})
+    return jsonify({ID: receipts_db[ID].get_receipt()})
 
 """ UPDATE RECEIPT - modifies provided fields of receipt without touching un-provided fields
 run with:
@@ -163,24 +163,24 @@ run with:
 @app.route('/receipts/update', methods=['PUT'])
 def update_receipt():
 
-    if not request.data or '_id' not in request.data or 'data' not in request.data or 'user_id' not in request.data['data']:
+    if not request.data or '_id' not in request.data or 'data' not in request.data or 'user_id' not in request.get_json()['data']:
         abort(400)
 
     data = request.get_json()
     _id = data['_id']
     
     if _id not in receipts_db:
-        abort(404, str(_id) + " is not a valid receipt _id")
+        abort(404, str(_id) + " is not a valid Receipt ID")
 
     for k in data['data'].keys():
         if k not in Receipt.fields:
-            abort(400, k + " is not a valid receipt field")
+            abort(400, k + " is not a valid Receipt field")
 
     receipt = receipts_db[_id]
     old_user_id, new_user_id = receipt.user_id, data['data']['user_id']
 
     if new_user_id not in users_db:
-        abort(404, str(new_user_id) + " is not a valid User _id")
+        abort(404, str(new_user_id) + " is not a valid User ID")
     
     for k,v in data['data'].iteritems():
         setattr(receipt, k, v)
@@ -206,13 +206,13 @@ def delete_receipt():
     _id = data['_id']
 
     if _id not in receipts_db:
-        abort(404, str(_id) + " is not a valid Receipt _id")
+        abort(404, str(_id) + " is not a valid Receipt ID")
 
     receipt = receipts_db[_id]
     receipts_db.pop(int(_id))
     users_db[receipt.user_id].receipts.pop(_id)
 
-    return jsonify({"message":"Receipt with _id " + str(_id) + " successfully deleted",
+    return jsonify({"message":"Receipt with ID " + str(_id) + " successfully deleted",
                     "receipt": receipt.get_receipt()})
 
 
